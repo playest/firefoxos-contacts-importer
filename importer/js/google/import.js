@@ -467,19 +467,67 @@ function ContactsSaver(data, at) {
 
     contact.init(cdata);
     fetchImage(cdata.photoUrl, contact, function onImage(c) {
-      var req = navigator.mozContacts.save(c);
-      req.onsuccess = function(e) {
-        if (typeof self.onsaved === 'function') {
-          self.onsaved(c);
-        }
+      console.log("c8: " + c.givenName + " " + c.familyName);
+
+      var filter = {
+        filterBy: ['familyName'],
+        filterValue: c.familyName,
+        filterOp: "equals",
+        filterLimit: 1
+      }
+
+      var countReq = window.navigator.mozContacts.find(filter);
+      countReq.onsuccess = function () {
+          console.log(this.result.length + ' contacts found.');
+
+          if(this.result.length === 0 || (this.result.length === 1 && this.result[0].givenName.toString() !== c.givenName.toString())) {
+            
+            if(this.result.length === 1 && this.result[0].givenName.toString() !== c.givenName.toString()) {
+
+              console.log("Saving contact because \"" + this.result[0].givenName + "\""
+                + " " + typeof(this.result[0].givenName)
+                + " !== "
+                + "\""
+                + c.givenName
+                + "\""
+                + " " + typeof(c.givenName)
+                );
+            }
+            else if (this.result.length === 0) {
+              console.log("Saving contact because there is no other contact with the same name");
+            }
+            else {
+              console.log("Saving contact because ???");
+            }
+
+
+            var saveReq = navigator.mozContacts.save(c);
+            saveReq.onsuccess = function(e) {
+              if (typeof self.onsaved === 'function') {
+                self.onsaved(c);
+              }
+              continuee();
+            };
+
+            saveReq.onerror = function(e) {
+              if (typeof self.onerror === 'function') {
+                self.onerror(self.data[next], e.target.error);
+              }
+            };
+
+          }
+          else {
+            console.log("Contact already exists with name \"" + c.givenName + " " + c.familyName + "\"");
+            self.onsaved(c);
+            continuee();
+          }
+      };
+
+      countReq.onerror = function(e) {
+        console.log("countReq.onerror " + this.error.name);
         continuee();
       };
 
-      req.onerror = function(e) {
-        if (typeof self.onerror === 'function') {
-          self.onerror(self.data[next], e.target.error);
-        }
-      };
     });
   }
 
