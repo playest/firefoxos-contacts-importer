@@ -20,3 +20,4 @@ address and so on.
 
 This application WON'T modify your contacts in Google Contacts, as well as other contacts
 that you may have already saved on your Firefox OS contacts list.
+
